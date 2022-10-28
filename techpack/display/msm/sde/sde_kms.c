@@ -3977,12 +3977,9 @@ void sde_kms_kickoff_count(struct sde_kms *sde_kms)
 	struct dsi_display *display = NULL;
 
 	if (sde_kms != NULL) {
-		for (i = 0; i < sde_kms->dsi_display_count; ++i) {
+		for (i = 0; i < sde_kms->dsi_display_count; ++i)
 			display = sde_kms->dsi_displays[i];
-		}
 	}
-
-	return;
 }
 
 void sde_kms_trigger_early_wakeup(struct sde_kms *sde_kms,
