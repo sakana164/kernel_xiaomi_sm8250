@@ -32,6 +32,9 @@ enum DISPPARAM_MODE  {
 	DISPPARAM_CE_ON                = 0x10,
 	DISPPARAM_CE_OFF               = 0xF0,
 
+	DISPPARAM_DIM_DC_ON            = 0xA0,
+	DISPPARAM_DIM_DC_OFF           = 0xB0,
+
 	DISPPARAM_CABCUI_ON            = 0x100,
 	DISPPARAM_CABCSTILL_ON         = 0x200,
 	DISPPARAM_CABCMOVIE_ON         = 0x300,
