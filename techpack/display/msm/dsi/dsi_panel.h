@@ -216,6 +216,7 @@ struct dsi_panel {
 	bool lp11_init;
 	bool ulps_feature_enabled;
 	bool ulps_suspend_enabled;
+	bool dc_dimming_enabled;
 	bool allow_phy_power_off;
 	bool reset_gpio_always_on;
 	atomic_t esd_recovery_pending;
