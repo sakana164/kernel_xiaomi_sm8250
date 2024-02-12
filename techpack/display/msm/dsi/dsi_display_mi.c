@@ -153,6 +153,35 @@ ssize_t dsi_display_read_oled_pmic_id(struct drm_connector *connector,
 	return snprintf(buf, PAGE_SIZE, "%s\n", oled_pmic_id_str);
 }
 
+ssize_t dsi_display_read_dc_dimming_enabled(struct drm_connector *connector,
+			char *buf)
+{
+	struct dsi_display *display = NULL;
+	struct dsi_bridge *c_bridge = NULL;
+	struct dsi_panel *panel = NULL;
+	bool status;
+
+	if (!connector || !connector->encoder || !connector->encoder->bridge) {
+		pr_err("Invalid connector/encoder/bridge ptr\n");
+		return -EINVAL;
+	}
+
+	c_bridge =  to_dsi_bridge(connector->encoder->bridge);
+	display = c_bridge->display;
+	if (!display || !display->panel) {
+		pr_err("Invalid display/panel ptr\n");
+		return -EINVAL;
+	}
+
+	panel = display->panel;
+
+	mutex_lock(&panel->panel_lock);
+	status = panel->dc_dimming_enabled;
+	mutex_unlock(&panel->panel_lock);
+
+	return snprintf(buf, PAGE_SIZE, "%d\n", status);
+}
+
 ssize_t dsi_display_read_panel_info(struct drm_connector *connector,
 			char *buf)
 {
