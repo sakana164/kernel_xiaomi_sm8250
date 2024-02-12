@@ -22,6 +22,9 @@ int dsi_display_set_disp_param(struct drm_connector *connector,
 int dsi_display_get_disp_param(struct drm_connector *connector,
 				u32 *param_type);
 
+ssize_t dsi_display_read_dc_dimming_enabled(struct drm_connector *connector,
+				char *buf);
+
 ssize_t dsi_display_write_mipi_reg(struct drm_connector *connector,
 				char *buf);
 ssize_t dsi_display_read_mipi_reg(struct drm_connector *connector,
