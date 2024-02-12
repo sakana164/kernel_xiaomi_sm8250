@@ -4639,6 +4639,86 @@ static int _sde_crtc_check_secure_state(struct drm_crtc *crtc,
 	return 0;
 }
 
+static uint32_t get_current_dc_brightness(struct sde_crtc_state *cstate)
+{
+	int i;
+	uint32_t brightness;
+
+	for (i = 0; i < cstate->num_connectors; i++) {
+		sde_connector_dc_get_current_backlight(cstate->connectors[i], &brightness);
+	}
+
+	return brightness;
+}
+
+static uint32_t get_current_dc_alpha(struct sde_crtc_state *cstate, uint32_t brightness)
+{
+	int i;
+	uint32_t alpha;
+
+	for (i = 0; i < cstate->num_connectors; i++) {
+		sde_connector_dc_get_current_alpha(cstate->connectors[i], brightness, &alpha);
+	}
+
+	return alpha;
+}
+
+static uint32_t _sde_crtc_config_dc_dim_layer_lapha(struct sde_crtc_state *cstate)
+{
+	uint32_t alpha, current_brightness;
+
+	current_brightness = get_current_dc_brightness(cstate);
+
+	if(cstate->dc_state.dimlayer_backlight_stash == current_brightness)
+		return cstate->dc_state.dimlayer_alpha_stash;
+
+	alpha = get_current_dc_alpha(cstate, current_brightness) & 0x000000FF;
+	cstate->dc_state.dimlayer_backlight_stash = current_brightness;
+	cstate->dc_state.dimlayer_alpha_stash = alpha;
+
+	return alpha;
+}
+
+void _sde_crtc_config_dc_dim_layer(struct sde_crtc *sde_crtc, struct sde_crtc_state *cstate,
+				struct drm_crtc_state *drm_state, uint32_t dim_layer_stage)
+{
+	uint32_t alpha;
+	struct drm_display_mode *display_mode = &drm_state->adjusted_mode;
+
+	alpha = _sde_crtc_config_dc_dim_layer_lapha(cstate);
+	cstate->dc_dim_layer = cstate->dim_layer;
+
+	if (cstate->num_dim_layers_bank <= SDE_MAX_DIM_LAYERS) {
+		cstate->dim_layer[cstate->num_dim_layers_bank].flags = SDE_DRM_DIM_LAYER_INCLUSIVE;
+		cstate->dim_layer[cstate->num_dim_layers_bank].stage = dim_layer_stage + SDE_STAGE_0;
+		cstate->dim_layer[cstate->num_dim_layers_bank].rect.x = 0x0;
+		cstate->dim_layer[cstate->num_dim_layers_bank].rect.y = 0x0;
+		cstate->dim_layer[cstate->num_dim_layers_bank].rect.w = display_mode->hdisplay;
+		cstate->dim_layer[cstate->num_dim_layers_bank].rect.h = display_mode->vdisplay;
+		cstate->dim_layer[cstate->num_dim_layers_bank].color_fill = (struct sde_mdss_color) {0x0, 0x0, 0x0, alpha};
+		cstate->num_dim_layers = cstate->num_dim_layers_bank + 1;
+	} else {
+		SDE_ERROR("invalid number of dim_layers:%d", cstate->num_dim_layers);
+	}
+	
+}
+
+static int sde_crtc_dc_atomic_check(struct sde_crtc *sde_crtc, struct sde_crtc_state *cstate,
+		struct plane_state *pstates, int cnt)
+{
+	int i, max_stage = 0;
+
+	for (i = 0; i < cnt; i++) {
+		max_stage = (pstates[i].stage > max_stage) ? pstates[i].stage : max_stage;
+	}
+
+	if (++max_stage > 0) {
+		_sde_crtc_config_dc_dim_layer(sde_crtc, cstate, &cstate->base, max_stage);
+	}
+
+	return 0;
+}
+
 static int _sde_crtc_check_get_pstates(struct drm_crtc *crtc,
 		struct drm_crtc_state *state,
 		struct drm_display_mode *mode,
@@ -4867,6 +4947,10 @@ static int _sde_crtc_atomic_check_pstates(struct drm_crtc *crtc,
 	if (rc)
 		return rc;
 #endif
+
+	rc = sde_crtc_dc_atomic_check(sde_crtc, cstate, pstates, cnt);
+	if (rc)
+		return rc;
 
 	/* assign mixer stages based on sorted zpos property */
 	rc = _sde_crtc_check_zpos(state, sde_crtc, pstates, cstate, mode, cnt);
@@ -5380,6 +5464,9 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 		sde_kms_info_add_keyint(info, "dim_layer_v1_max_layers",
 				SDE_MAX_DIM_LAYERS);
 	}
+
+	msm_property_install_volatile_range(&sde_crtc->property_info,
+			"dim_layer_dc", 0x0, 0, ~0, 0, CRTC_PROP_DIM_LAYER_DC);
 
 	sde_kms_info_add_keyint(info, "hw_version", catalog->hwversion);
 	sde_kms_info_add_keyint(info, "max_linewidth",

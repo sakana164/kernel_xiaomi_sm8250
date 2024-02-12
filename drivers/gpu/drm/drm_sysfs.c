@@ -300,6 +300,14 @@ static ssize_t mipi_reg_show(struct device *device,
 	return dsi_display_read_mipi_reg(connector, buf);
 }
 
+static ssize_t dc_dimming_enabled_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct drm_connector *connector = to_drm_connector(dev);
+
+	return dsi_display_read_dc_dimming_enabled(connector, buf);
+}
+
 static ssize_t oled_pmic_id_show(struct device *device,
 			   struct device_attribute *attr,
 			   char *buf)
@@ -559,6 +567,7 @@ static DEVICE_ATTR_RO(enabled);
 static DEVICE_ATTR_RO(dpms);
 static DEVICE_ATTR_RO(modes);
 static DEVICE_ATTR_RW(disp_param);
+static DEVICE_ATTR_RO(dc_dimming_enabled);
 static DEVICE_ATTR_RW(mipi_reg);
 static DEVICE_ATTR_RO(oled_pmic_id);
 static DEVICE_ATTR_RO(panel_info);
@@ -580,6 +589,7 @@ static struct attribute *connector_dev_attrs[] = {
 	&dev_attr_dpms.attr,
 	&dev_attr_modes.attr,
 	&dev_attr_disp_param.attr,
+	&dev_attr_dc_dimming_enabled.attr,
 	&dev_attr_mipi_reg.attr,
 	&dev_attr_oled_pmic_id.attr,
 	&dev_attr_panel_info.attr,
