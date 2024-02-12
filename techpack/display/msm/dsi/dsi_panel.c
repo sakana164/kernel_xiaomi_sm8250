@@ -932,6 +932,8 @@ int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 			} else if (mi_cfg->thermal_hbm_disabled && bl_lvl > 2047 && mi_cfg->last_bl_level == 0) {
 				bl_lvl = 2047;
 				rc = dsi_panel_update_backlight(panel, bl_lvl);
+			} else if (bl_lvl && bl_lvl < mi_cfg->dc_threshold && panel->dc_dimming_enabled){
+				rc = dsi_panel_update_backlight(panel, mi_cfg->dc_threshold);
 			} else {
 				rc = dsi_panel_update_backlight(panel, bl_lvl);
 			}
@@ -2603,6 +2605,9 @@ static int dsi_panel_parse_misc_features(struct dsi_panel *panel)
 
 	panel->reset_gpio_always_on = utils->read_bool(utils->data,
 			"qcom,platform-reset-gpio-always-on");
+
+	panel->dc_dimming_enabled = utils->read_bool(utils->data,
+			"qcom,mdss-dsi-panel-dc-dimming-enabled");
 
 	return 0;
 }

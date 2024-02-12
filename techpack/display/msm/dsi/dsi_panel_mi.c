@@ -3965,6 +3965,18 @@ int dsi_panel_set_disp_param(struct dsi_panel *panel, u32 param)
 		pr_info("ceoff\n");
 		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_MI_CEOFF);
 		break;
+	case DISPPARAM_DIM_DC_ON:
+		pr_info("dim layer dc on\n");
+		panel->dc_dimming_enabled = true;
+		if(mi_cfg->last_bl_level < mi_cfg->dc_threshold)
+			rc = dsi_panel_update_backlight(panel, mi_cfg->dc_threshold);
+		break;
+	case DISPPARAM_DIM_DC_OFF:
+		pr_info("dim layer dc off\n");
+		panel->dc_dimming_enabled = false;
+		if(mi_cfg->last_bl_level < mi_cfg->dc_threshold)
+			rc = dsi_panel_update_backlight(panel, mi_cfg->last_bl_level);
+		break;
 	default:
 		break;
 	}
