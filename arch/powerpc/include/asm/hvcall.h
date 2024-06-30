@@ -424,7 +424,7 @@ struct hvcall_mpp_data {
 	unsigned long backing_mem;
 };
 
-long h_get_mpp(struct hvcall_mpp_data *mpp_data);
+int h_get_mpp(struct hvcall_mpp_data *);
 
 struct hvcall_mpp_x_data {
 	unsigned long coalesced_bytes;
