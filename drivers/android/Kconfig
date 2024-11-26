@@ -54,6 +54,12 @@ config ANDROID_BINDER_IPC_SELFTEST
 	  exhaustively with combinations of various buffer sizes and
 	  alignments.
 
+config REKERNEL
+	bool "Re-Kernel"
+	depends on ANDROID_BINDER_IPC
+	---help---
+	  Make tombstone users get a better experience
+
 endif # if ANDROID
 
 endmenu
