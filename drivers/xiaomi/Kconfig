@@ -3,6 +3,14 @@ menu "Xiaomi MIUI additions"
 config XIAOMI_MIUI
 	bool "Enable Xiaomi MIUI modifications"
 	depends on MACH_XIAOMI
+	select BINDER_OPT
+	select PACKAGE_RUNTIME_INFO
+	select MIGT
+	select MIGT_ENERGY_MODEL
+	select PERF_CRITICAL_RT_TASK
+	select PERF_HUMANTASK
+	select SF_BINDER
+	select TASK_DELAY_ACCT
 	help
 	  Enables compilation of Xiaomi MIUI specific vendor additions
 
