@@ -1808,7 +1808,7 @@ static ssize_t avg_size_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
 	struct zram *zram = dev_to_zram(dev);
-	return scnprintf(buf, PAGE_SIZE, "%8llu\n", (u64)atomic_read(&zram->avg_size));
+	return scnprintf(buf, PAGE_SIZE, "%8llu\n", (u64)atomic64_read(&zram->avg_size));
 }
 #endif
 
