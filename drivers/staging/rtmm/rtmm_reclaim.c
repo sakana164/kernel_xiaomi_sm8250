@@ -25,6 +25,7 @@
 #include <linux/version.h>
 #include <linux/sched/mm.h>
 #include <linux/sched/types.h>
+#include <linux/mmap_lock.h>
 
 #define MB_TO_PAGES(m)  ((m) << (20 - PAGE_SHIFT))
 #define PAGES_TO_MB(p)   ((p) >> (20 - PAGE_SHIFT))
@@ -202,7 +203,7 @@ static int mem_process_reclaim(pid_t pid, int type, int nr_to_reclaim)
 	rp.nr_reclaimed = 0;
 	reclaim_walk.private = &rp;
 
-	down_read(&mm->mmap_sem);
+	mmap_read_lock(mm);
 
 	for (vma = mm->mmap; vma; vma = vma->vm_next) {
 		if (is_vm_hugetlb_page(vma))
@@ -222,7 +223,7 @@ static int mem_process_reclaim(pid_t pid, int type, int nr_to_reclaim)
 	}
 
 	flush_tlb_mm(mm);
-	up_read(&mm->mmap_sem);
+	mmap_read_unlock(mm);
 
 	mmput(mm);
 
