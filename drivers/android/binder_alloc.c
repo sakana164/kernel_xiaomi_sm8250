@@ -23,6 +23,7 @@
 #include <linux/uaccess.h>
 #include <linux/highmem.h>
 #include <linux/sizes.h>
+#include <linux/mmap_lock.h>
 #include "binder_internal.h"
 #include "binder_trace.h"
 #include <trace/hooks/binder.h>
@@ -237,10 +238,10 @@ static int binder_install_single_page(struct binder_alloc *alloc,
 	page = alloc_page(GFP_KERNEL | __GFP_HIGHMEM | __GFP_ZERO);
 
 	/*
-	 * Protected with mmap_sem in write mode as multiple tasks
+	 * Protected with mmap_lock in write mode as multiple tasks
 	 * might race to install the same page.
 	 */
-	down_write(&alloc->vma_vm_mm->mmap_sem);
+	mmap_write_lock(alloc->vma_vm_mm);
 	if (binder_get_installed_page(lru_page)) {
 		ret = 1;
 		goto out;
@@ -270,7 +271,7 @@ static int binder_install_single_page(struct binder_alloc *alloc,
 	/* Mark page installation complete and safe to use */
 	binder_set_installed_page(lru_page, page);
 out:
-	up_write(&alloc->vma_vm_mm->mmap_sem);
+	mmap_write_unlock(alloc->vma_vm_mm);
 	mmput_async(alloc->vma_vm_mm);
 	if (ret && page)
 		__free_page(page);
@@ -1096,7 +1097,7 @@ enum lru_status binder_alloc_free_page(struct list_head *item,
 
 	if (!mmget_not_zero(mm))
 		goto err_mmget;
-	if (!down_read_trylock(&mm->mmap_sem))
+	if (!mmap_read_trylock(mm))
 		goto err_down_read_mmap_sem_failed;
 	if (!binder_alloc_trylock(alloc))
 		goto err_get_alloc_lock_failed;
@@ -1129,7 +1130,7 @@ enum lru_status binder_alloc_free_page(struct list_head *item,
 		trace_binder_unmap_user_end(alloc, index);
 	}
 
-	up_read(&mm->mmap_sem);
+	mmap_read_unlock(mm);
 	mmput_async(mm);
 	__free_page(page_to_free);
 
@@ -1140,7 +1141,7 @@ err_invalid_vma:
 err_page_already_freed:
 	binder_alloc_unlock(alloc);
 err_get_alloc_lock_failed:
-	up_read(&mm->mmap_sem);
+	mmap_read_unlock(mm);
 err_down_read_mmap_sem_failed:
 	mmput_async(mm);
 err_mmget:
